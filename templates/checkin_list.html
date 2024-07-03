@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product Data</title>
+
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+h1 {
+    text-align: center;
+    background-color: #007bff;
+    color: #fff;
+    padding: 20px;
+}
+
+table {
+    width: 80%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    background-color: #fff;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #ddd;
+}
+
+td:nth-child(2) { /* 2 is the column index (0-based) for the "Name" column */
+        text-transform: capitalize;
+    }
+
+    .pretty-button {
+        background-color: #308d05;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+    }
+
+    .pretty-button:hover {
+        background-color: #0056b3;
+    }
+
+    /* Center the button horizontally and vertically */
+    .button-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+    <h1>Check in list</h1>
+    <div class="button-container">
+        <button id="export-button" class="pretty-button">Export to CSV</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                    <td>{{ row[2] }}</td>
+                    <td>{{ row[3] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script>
+        // Function to convert a two-dimensional array (table data) to CSV format
+        function convertToCSV(data) {
+            const csv = [];
+            data.forEach(function (row) {
+                csv.push(row.join(','));
+            });
+            return csv.join('\n');
+        }
+    
+        // Function to trigger the CSV export
+        function exportTableToCSV() {
+            const table = document.querySelector('table');
+            const rows = table.querySelectorAll('tr');
+            const data = [];
+    
+            rows.forEach(function (row) {
+                const rowData = [];
+                row.querySelectorAll('td').forEach(function (cell) {
+                    rowData.push(cell.textContent);
+                });
+                data.push(rowData);
+            });
+    
+            const csvContent = convertToCSV(data);
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'check_in.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    
+        // Attach the exportTableToCSV function to the button click event
+        const exportButton = document.getElementById('export-button');
+        exportButton.addEventListener('click', exportTableToCSV);
+    </script>
+    
+</body>
+</html>

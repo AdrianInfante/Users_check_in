@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Vicon Check-In</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            touch-action: manipulation;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 20px 0;
+            color: #333;
+        }
+
+        .table-container {
+            touch-action: manipulation;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin: 20px auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 12px;
+            text-align: center;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .modify-btn, .apply-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        .modify-btn {
+            background-color: #f0ad4e;
+        }
+
+        .apply-btn {
+            background-color: #5bc0de;
+        }
+
+        .apply-btn:disabled, .modify-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body >
+    <h1>Vicon Check-In</h1> 
+    <!-- <button onclick="triggerUpdateNotionStatus()">Update Notion Status</button> -->
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody class="table-container"id="tableBody">
+            <tr data-name="adrian">
+                <td>Adrian</td>
+                <td>
+                    <select id="adrianStatus" onchange="enableModifyButton('adrian')">
+                        <option value="select">Select an option</option>
+                        <option value="In the Office">In the Office</option>
+                        <option value="Sick">Sick</option>
+                        <option value="Holiday">Holiday</option>
+                        <option value="On Site">On Site</option>
+                        <option value="Working from Home">Working from home</option>
+                        <option value="No Status">No Status</option>
+                    </select>
+                </td>
+                <td id="adrianDate"></td>
+                <td>
+                    <button class="modify-btn" id="adrianModifyBtn" onclick="modifyStatus('adrian')" >Modify</button>
+                </td>
+            </tr>
+            <tr data-name="amy">
+                <td>Amy</td>
+                <td>
+                    <select id="amyStatus" onchange="enableModifyButton('amy')">
+                        <option value="select">Select an option</option>
+                        <option value="In the Office">In the Office</option>
+                        <option value="Sick">Sick</option>
+                        <option value="Holiday">Holiday</option>
+                        <option value="On Site">On Site</option>
+                        <option value="Working from Home">Working from home</option>
+                        <option value="No Status">No Status</option>
+                    </select>
+                </td>
+                <td id="amyDate"></td>
+                <td>
+                    <button class="modify-btn" id="amyModifyBtn" onclick="modifyStatus('amy')"  >Modify</button>
+                </td>
+            </tr> 
+            <tr data-name="alison">
+                <td>Alison</td>
+                <td>
+                    <select id="alisonStatus"onchange="enableModifyButton('alison')">
+                        <option value="select">Select an option</option>
+                        <option value="In the Office">In the Office</option>
+                        <option value="Sick">Sick</option>
+                        <option value="Holiday">Holiday</option>
+                        <option value="On Site">On Site</option>
+                        <option value="Working from Home">Working from home</option>
+                        <option value="No Status">No Status</option>
+                    </select>
+                </td>
+                <td id="alisonDate"></td>
+                <td>
+                    <button class="modify-btn" id="alisonModifyBtn"  onclick="modifyStatus('alison')" >Modify</button>
+                </td>
+            </tr>          
+            
+
+
+
+    <script>
+
+        
+
+        // Add an event listener to the 'gesturestart' event
+        document.addEventListener('gesturestart', function(event) {
+    // Prevent the default behavior of the gesture
+    event.preventDefault();
+});
+
+
+        
+document.addEventListener('DOMContentLoaded', function() {
+
+    
+    // Define the UK time zone offset in minutes
+    const ukTimeZoneOffsetMinutes = 0; // Change this to 60 during British Summer Time (BST)
+    updateTableOnLoad();
+    // Call the checkDayOfWeekChange function every second
+    setInterval(checkDayOfWeekChange, 1000);
+    
+    sortTableByName();
+    
+    setInterval(updateDate, 1000);
+    // Call the setAutomaticStatus function to set initial statuses for Neil and Alison
+    //setAutomaticStatus();
+    // Retrieve and set the selected status for each user from the database
+    fetch('/get_user_statuses')
+    .then(response => response.json())
+    .then(userStatuses => {
+        const names = ['adrian', 'alison', 'amy'];
+
+        names.forEach((name) => {
+            const statusSelect = document.getElementById(name + 'Status');
+            const selectedStatus = userStatuses[name];
+
+            if (selectedStatus) {
+                statusSelect.value = selectedStatus.status;
+
+                // Convert the date to UK time ("dd-MM-YYYY HH:mm:ss" format)
+                const date = new Date(selectedStatus.date);
+
+                console.log("Time:", date);
+
+                const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+
+                // Update the date cell
+                const dateCell = document.getElementById(name + 'Date');
+
+                // Set the initial styles based on the retrieved status
+                switch (selectedStatus.status) {
+                    case 'In the Office':
+                        setStylesForStatus(name, '#43ff0a', 'black', formattedDate);
+                        break;
+                    case 'Sick':
+                        setStylesForStatus(name, '#e85920', 'white', formattedDate);
+                        break;
+                    case 'No Status':
+                        setStylesForStatus(name, '#8c8c8c', 'black', formattedDate);
+                        break;
+                    case 'On Site':
+                        setStylesForStatus(name, '#00d5ff', 'black', formattedDate);
+                        break;
+                    case 'Working from Home':
+                        setStylesForStatus(name, '#ffb300', 'black', formattedDate);
+                        break;
+                    case 'Holiday':
+                        setStylesForStatus(name, '#eb4de8', 'white', formattedDate);
+                        break;
+                    default:
+                        // Reset styles if status is not one of the expected values
+                        resetStylesForStatus(name);
+                        break;
+                }
+            }
+        });
+    });
+
+// Function to set styles for a specific status
+function setStylesForStatus(name, backgroundColor, textColor, formattedDate) {
+    const tableRow = document.querySelector('tr[data-name="' + name + '"]');
+    const statusSelect = document.getElementById(name + 'Status');
+    const dateCell = document.getElementById(name + 'Date');
+
+    tableRow.style.backgroundColor = backgroundColor;
+    tableRow.style.color = textColor;
+    statusSelect.disabled = true;
+    dateCell.textContent = formattedDate;
+}
+
+// Function to reset styles for a specific status
+function resetStylesForStatus(name) {
+    const tableRow = document.querySelector('tr[data-name="' + name + '"]');
+    const statusSelect = document.getElementById(name + 'Status');
+    const dateCell = document.getElementById(name + 'Date');
+
+    tableRow.style.backgroundColor = '';
+    tableRow.style.color = '';
+    statusSelect.disabled = false;
+    dateCell.textContent = '';
+    
+}
+
+
+    // Store the current day of the week
+    let currentDayOfWeek = new Date().getDay();
+
+
+function checkDayOfWeekChange() {
+    const newDayOfWeek = new Date().getDay();
+    if (newDayOfWeek !== currentDayOfWeek) {
+        // Day of the week has changed, set status to "No Status" for each user
+        const names = ['adrian', 'alison', 'amy'];
+        
+        currentDayOfWeek = newDayOfWeek;
+       
+    }
+}
+
+});
+
+function triggerUpdateNotionStatus() {
+    // Loop through the names array
+    names.forEach(name => {
+        // Call update_user_notion_status function for each user with 'No Status'
+        update_user_notion_status(name, 'No Status');
+    });
+}
+
+
+function update_user_notion_status(name, status) {
+    // Define the URL of your server endpoint where the Python function is hosted
+    const url = '/update_status';
+
+    // Prepare the data to send in the request body
+    const data = {
+        name: name,
+        status: status
+    };
+
+    // Configure the fetch request
+    fetch(url, {
+        method: 'POST', // Or 'PUT' if you prefer
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (response.ok) {
+            // Request was successful, handle response if needed
+            console.log('Status updated successfully');
+        } else {
+            // Request failed, handle error if needed
+            console.error('Failed to update status:', response.status);
+        }
+    })
+    .catch(error => {
+        // An error occurred while making the request, handle it if needed
+        console.error('Error:', error);
+    });
+}
+
+
+function updateTableOnLoad() {
+    // Make an AJAX request to the server to get user statuses for today
+    fetch('/get_user_statuses_today')
+        .then(response => response.json())
+        .then(userStatuses => {
+            // Loop through the user statuses and update the table
+            for (const userName in userStatuses) {
+                if (userStatuses.hasOwnProperty(userName)) {
+                    const status = userStatuses[userName].status;
+                    const date = userStatuses[userName].date;
+
+                    // Update the status select and date cell for the user
+                    const statusSelect = document.getElementById(userName + 'Status');
+                    const dateCell = document.getElementById(userName + 'Date');
+
+                    statusSelect.value = status;
+
+                    if (status !== 'select') {
+                        const currentDate = new Date(date);
+                        const formattedDate = `${currentDate.getDate().toString().padStart(2, '0')}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getFullYear()} ${currentDate.getHours().toString().padStart(2, '0')}:${currentDate.getMinutes().toString().padStart(2, '0')}:${currentDate.getSeconds().toString().padStart(2, '0')}`;
+                        
+                        dateCell.textContent = formattedDate;
+                        const tableRow = document.querySelector('tr[data-name="' + userName + '"]');
+                        tableRow.style.backgroundColor = '#5386cc';
+                        tableRow.style.color = 'white';
+                        statusSelect.disabled = true;
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching user statuses:', error);
+        });
+}
+
+
+
+
+
+
+
+
+
+        
+        function sortTableByName() {
+            const tableBody = document.getElementById('tableBody');
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+        
+            rows.sort((a, b) => {
+                const nameA = a.querySelector('td:first-child').textContent;
+                const nameB = b.querySelector('td:first-child').textContent;
+                return nameA.localeCompare(nameB);
+            });
+        
+            rows.forEach(row => tableBody.appendChild(row));
+        }
+
+        // Store the initial content of the <h1> element
+        let previousH1Content = document.querySelector('h1').textContent;
+        
+        function updateDate() {
+                const currentDate = new Date();
+                const day = currentDate.getDate().toString().padStart(2, '0');
+                const month = (currentDate.getMonth() + 1).toString().padStart(2, '0'); // Month is zero-based
+                const year = currentDate.getFullYear();
+                const hours = currentDate.getHours().toString().padStart(2, '0');
+                const minutes = currentDate.getMinutes().toString().padStart(2, '0');
+                const seconds = currentDate.getSeconds().toString().padStart(2, '0');
+                const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                const dayOfWeek = daysOfWeek[currentDate.getDay()]; // Get the day of the week
+
+                const formattedDate = `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+
+                const dateElements = document.querySelectorAll('td[id$="Date"]');
+   
+
+                // Update the h1 element
+                const h1Element = document.querySelector('h1');
+                h1Element.textContent = `${dayOfWeek}`;
+                console.log(new Date().getTimezoneOffset());
+                
+                
+        }
+
+
+    function applyStatus(name) {
+    const statusSelect = document.getElementById(name + 'Status');
+    const applyBtn = document.getElementById(name + 'ApplyBtn');
+    const modifyBtn = document.getElementById(name + 'ModifyBtn');
+    const tableRow = document.querySelector('tr[data-name="' + name + '"]');
+
+    if (!statusSelect.disabled) {
+        const status = statusSelect.value;
+        console.log(name + ': ' + status);
+
+        // Store the selected status in Local Storage
+        localStorage.setItem(name + 'Status', status);
+
+        // Check if status is one of the specified values
+        if (['In the Office' ].includes(status)) {
+            tableRow.style.backgroundColor = '#43ff0a'; // Change row background color to green
+            tableRow.style.color = 'white';
+
+            // Get the current date and time
+            const currentDate = new Date();
+
+            const formattedDate = currentDate.toLocaleString(); // This is showing the right date
+            // Update the date column with the current date and time
+            const dateCell = document.getElementById(name + 'Date');
+
+            dateCell.textContent = formattedDate;
+
+        }
+
+        else if (['On Site'].includes(status)) {
+            tableRow.style.backgroundColor = '#00d5ff'; 
+            tableRow.style.color = 'black';
+
+            // Get the current date and time
+            const currentDate = new Date();
+
+            const formattedDate = currentDate.toLocaleString(); // This is showing the right date
+            // Update the date column with the current date and time
+            const dateCell = document.getElementById(name + 'Date');
+
+            dateCell.textContent = formattedDate;
+
+        } 
+
+        else if (['Working from Home'].includes(status)) {
+            tableRow.style.backgroundColor = '#ffb300'; 
+            tableRow.style.color = 'black';
+
+            // Get the current date and time
+            const currentDate = new Date();
+
+            const formattedDate = currentDate.toLocaleString(); // This is showing the right date
+            // Update the date column with the current date and time
+            const dateCell = document.getElementById(name + 'Date');
+
+            dateCell.textContent = formattedDate;
+
+        } 
+        else if (['Holiday'].includes(status)) {
+            tableRow.style.backgroundColor = '#eb4de8'; 
+            tableRow.style.color = 'white';
+
+            // Get the current date and time
+            const currentDate = new Date();
+
+            const formattedDate = currentDate.toLocaleString(); // This is showing the right date
+            // Update the date column with the current date and time
+            const dateCell = document.getElementById(name + 'Date');
+
+            dateCell.textContent = formattedDate;
+
+        } 
+        
+        else if (['Sick'].includes(status)) {
+            tableRow.style.backgroundColor = '#e85920'; 
+            tableRow.style.color = 'white';
+
+            // Get the current date and time
+            const currentDate = new Date();
+
+            const formattedDate = currentDate.toLocaleString(); // This is showing the right date
+            // Update the date column with the current date and time
+            const dateCell = document.getElementById(name + 'Date');
+
+            dateCell.textContent = formattedDate;
+
+        } else if (['No Status'].includes(status)) {
+            tableRow.style.backgroundColor = '#8c8c8c'; 
+            tableRow.style.color = 'black';
+
+            // Get the current date and time
+            const currentDate = new Date();
+
+            const formattedDate = currentDate.toLocaleString(); // This is showing the right date
+            // Update the date column with the current date and time
+            const dateCell = document.getElementById(name + 'Date');
+
+            dateCell.textContent = formattedDate;
+
+        } else {
+            tableRow.style.backgroundColor = ''; // Reset row background color
+            tableRow.style.color = '';
+
+            // Clear the date column
+            const dateCell = document.getElementById(name + 'Date');
+            dateCell.textContent = '';
+        }
+    }
+
+    statusSelect.disabled = true; // Disable the select
+    applyBtn.disabled = true; // Disable the Apply button
+    modifyBtn.disabled = false; // Enable the Modify button
+}
+
+        
+
+function modifyStatus(name) {
+    const statusSelect = document.getElementById(name + 'Status');
+    const modifyBtn = document.getElementById(name + 'ModifyBtn');
+
+    statusSelect.disabled = false; // Enable the select
+    modifyBtn.disabled = true; // Disable the Modify button
+
+    if (statusSelect.value !== 'select') {
+        const status = statusSelect.value;
+
+        // Get the date cell content directly
+        const dateCell = document.getElementById(name + 'Date').textContent.trim();
+
+        // Prepare the data to be sent to the server
+        const data = {
+            name: name,
+            status: status,
+            date: dateCell  // Include the date in the data
+        };
+
+        // Make a DELETE request to send the data to the server
+        fetch('/delete_status', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log(`Status deleted successfully for ${name}`);
+                // Optionally update UI after deletion if needed
+            } else {
+                console.error('Failed to delete status:', response.status);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+}
+
+
+
+
+function enableModifyButton(name) {
+    const statusSelect = document.getElementById(name + 'Status');
+    const modifyBtn = document.getElementById(name + 'ModifyBtn');
+
+    if (statusSelect.value !== 'select') {
+        modifyBtn.disabled = false;
+
+        // Get the selected status, user's name, and date
+        const status = statusSelect.value;
+        const userName = name;
+        const currentDate = new Date();
+        const formattedDate = currentDate.toISOString(); // Use ISO format for the date
+
+        // Create an object to hold the data including the date
+        const data = {
+            name: userName,
+            status: status,
+            date: formattedDate // Include the date
+        };
+
+        // Make an AJAX POST request to send the data to the server
+        fetch('/update_status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log(`Status updated for ${userName}: ${status}`);
+            } else {
+                console.error('Failed to update status.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    } else {
+        //modifyBtn.disabled = true;
+    }
+}
+
+       
+        // Attach event listeners to status dropdowns
+        const names = ['adrian', 'alison', 'amy'];
+        names.forEach((name) => {
+            const statusSelect = document.getElementById(name + 'Status');
+            statusSelect.addEventListener('change', () => applyStatus(name));
+        });
+        
+        // Initial date update
+        updateDate();
+        </script>
+        
+</body>
+</html>
