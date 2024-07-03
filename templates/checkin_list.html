@@ -97,7 +97,7 @@ td:nth-child(2) { /* 2 is the column index (0-based) for the "Name" column */
         </tbody>
     </table>
     <script>
-        // Function to convert a two-dimensional array (table data) to CSV format
+        
         function convertToCSV(data) {
             const csv = [];
             data.forEach(function (row) {
@@ -106,7 +106,7 @@ td:nth-child(2) { /* 2 is the column index (0-based) for the "Name" column */
             return csv.join('\n');
         }
     
-        // Function to trigger the CSV export
+        
         function exportTableToCSV() {
             const table = document.querySelector('table');
             const rows = table.querySelectorAll('tr');
@@ -130,7 +130,7 @@ td:nth-child(2) { /* 2 is the column index (0-based) for the "Name" column */
             URL.revokeObjectURL(url);
         }
     
-        // Attach the exportTableToCSV function to the button click event
+        
         const exportButton = document.getElementById('export-button');
         exportButton.addEventListener('click', exportTableToCSV);
     </script>
