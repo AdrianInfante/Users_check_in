@@ -66,6 +66,7 @@ pip install -r requirements.txt
 ## Where to obtain the user page ID
 
 
+![Alt text](https://github.com/AdrianInfante/Users_check_in/blob/main/Where%20to%20obtain%20users%20id%20in%20notion.png)
 
 
 
