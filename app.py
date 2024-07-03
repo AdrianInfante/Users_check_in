@@ -99,7 +99,7 @@ def get_user_statuses():
     today = today_date.today().strftime('%Y-%m-%d')
     
     # Retrieve the status and date for each user from the database
-    names = ['adrian','alison']
+    names = ['adrian','alison', 'amy]
     
     for name in names:
         cursor.execute("SELECT status, date FROM users WHERE name = ? AND date(date) = ?", (name, today))
