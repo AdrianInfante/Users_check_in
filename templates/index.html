@@ -163,9 +163,6 @@ document.addEventListener('DOMContentLoaded', function() {
     sortTableByName();
     
     setInterval(updateDate, 1000);
-    // Call the setAutomaticStatus function to set initial statuses for Neil and Alison
-    //setAutomaticStatus();
-    // Retrieve and set the selected status for each user from the database
     fetch('/get_user_statuses')
     .then(response => response.json())
     .then(userStatuses => {
@@ -297,7 +294,6 @@ function update_user_notion_status(name, status) {
         }
     })
     .catch(error => {
-        // An error occurred while making the request, handle it if needed
         console.error('Error:', error);
     });
 }
