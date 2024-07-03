@@ -60,6 +60,15 @@ pip install -r requirements.txt
 - **Update Status**: Send a POST request to `/update_status` with JSON payload containing `name`, `status`, `date` to update user status.
 - **View Check-in List**: Navigate to `/checkin_list` to view all user check-in records.
 
+## Generate token for Notion
+    https://www.notion.so/profile/integrations 
+
+## Where to obtain the user page ID
+
+
+
+
+
 ## Future updates
 
 - Customize error handling and logging.
