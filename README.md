@@ -1,6 +1,3 @@
-Certainly! Here's a README template for your GitHub repository based on the Flask application you've provided:
-
----
 
 # Flask Application with SQLite Database Integration
 
